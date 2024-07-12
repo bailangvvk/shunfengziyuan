@@ -1,101 +1,85 @@
 addEventListener('fetch', event => {
-	event.respondWith(handleRequest(event.request));
+    event.respondWith(handleRequest(event.request));
 });
 
 async function handleRequest(request) {
-	const query = '顺丰资源';
-	const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+    try {
+        const query = '顺丰资源';
+        const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
 
-	// 发起搜索请求
-	const searchResponse = await fetch(url, {
-		headers: {
-			'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-		}
-	});
+        const searchResponse = await fetch(url, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        });
 
-	// if (!searchResponse.ok) {
-	// 	return new Response('Failed to fetch YouTube results.', { status: searchResponse.status });
-	// }
+        if (!searchResponse.ok) {
+            return new Response('Failed to fetch YouTube results.', { status: searchResponse.status });
+        }
 
-	// 提取搜索结果页面的文本内容
-	const searchText = await searchResponse.text();
+        const searchText = await searchResponse.text();
+        const videoIdMatch = searchText.match(/"videoId":"([a-zA-Z0-9_-]{11})".*?"title":{"runs":\[{"text":"([^"]+)"/);
 
-	// 使用正则表达式匹配 videoId 和 title
-	const videoIdMatch = searchText.match(/"videoId":"([a-zA-Z0-9_-]{11})".*?"title":{"runs":\[{"text":"([^"]+)"/);
+        if (!videoIdMatch || videoIdMatch.length < 3) {
+            return new Response('No video data found.', { status: 404 });
+        }
 
-	// if (!videoIdMatch || videoIdMatch.length < 3) {
-	// 	return new Response('No video data found.', { status: 404 });
-	// }
+        const videoId = videoIdMatch[1];
+        const videoTitle = videoIdMatch[2];
+        const videoLink = `视频标题: \n${videoTitle}\n视频链接: \nhttps://www.youtube.com/watch?v=${videoId}`;
 
-	const videoId = videoIdMatch[1];
-	const videoTitle = videoIdMatch[2];
-	const videoLink = `视频标题: \n${videoTitle}\n视频链接: \nhttps://www.youtube.com/watch?v=${videoId}`;
+        const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+        const videoResponse = await fetch(videoUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        });
 
-	// 请求视频详情页面
-	const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-	const videoResponse = await fetch(videoUrl, {
-		headers: {
-			'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-		}
-	});
+        if (!videoResponse.ok) {
+            return new Response(`Failed to fetch video details for ${videoId}.`, { status: videoResponse.status });
+        }
 
-	// if (!videoResponse.ok) {
-	// 	return new Response(`Failed to fetch video details for ${videoId}.`, { status: videoResponse.status });
-	// }
+        const videoText = await videoResponse.text();
+        const nodeUrlMatch = videoText.match(/本期免费节点获取：\s*(https?:\/\/[^\s"]+)/);
 
-	// 提取视频详情页面的文本内容
-	const videoText = await videoResponse.text();
+        if (!nodeUrlMatch || nodeUrlMatch.length < 2) {
+            return new Response('No "本期免费节点获取：" URL found.', { status: 404 });
+        }
 
-	// 使用正则表达式提取“本期免费节点获取：”后的URL
-	const nodeUrlMatch = videoText.match(/本期免费节点获取：\s*(https?:\/\/[^\s"]+)/);
+        const nodeUrl = nodeUrlMatch[1];
+        const nodeResponse = await fetch(nodeUrl, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        });
 
-	// if (!nodeUrlMatch || nodeUrlMatch.length < 2) {
-	// 	return new Response('No "本期免费节点获取：" URL found.', { status: 404 });
-	// }
+        if (!nodeResponse.ok) {
+            return new Response(`Failed to fetch node URL ${nodeUrl}.`, { status: nodeResponse.status });
+        }
 
-	const nodeUrl = nodeUrlMatch[1];
+        const nodeText = await nodeResponse.text();
+        const driveLinks = nodeText.match(/https:\/\/drive\.google\.com\/uc\?export=download&id=[a-zA-Z0-9_-]+/g);
 
-	// 请求节点获取页面
-	const nodeResponse = await fetch(nodeUrl, {
-		headers: {
-			'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-		}
-	});
+        if (!driveLinks || driveLinks.length < 3) {
+            return new Response('No sufficient links found.', { status: 404 });
+        }
 
-	// if (!nodeResponse.ok) {
-	// 	return new Response(`Failed to fetch node URL ${nodeUrl}.`, { status: nodeResponse.status });
-	// }
+        const userAgent = request.headers.get('User-Agent').toLowerCase();
+        let redirectUrl = '';
 
-	// 提取节点获取页面的文本内容
-	const nodeText = await nodeResponse.text();
+        if (userAgent.includes('clash.meta')) {
+            redirectUrl = driveLinks[1];
+        } else if (userAgent.includes('clash')) {
+            redirectUrl = driveLinks[2];
+        } else if (userAgent.includes('v2ray')) {
+            redirectUrl = driveLinks[3];
+        } else {
+            return new Response('Not Found', { status: 404 });
+        }
 
-	// 使用正则表达式匹配所有 https://drive.google.com/uc?export=download&id= 链接
-	const driveLinks = nodeText.match(/https:\/\/drive\.google\.com\/uc\?export=download&id=[a-zA-Z0-9_-]+/g);
+        return Response.redirect(redirectUrl, 302);
 
-	// if (!driveLinks || driveLinks.length < 3) {
-	// 	return new Response('No sufficient links found.', { status: 404 });
-	// }
-
-	// 构建重定向响应
-	// const redirectUrl = driveLinks[0]; // 这里假设取第一个链接作为重定向目标
-
-	// return Response.redirect(redirectUrl, 302);
-
-	// const userAgent = request.headers.get('User-Agent');
-	const userAgent = request.headers.get('User-Agent').toLowerCase(); // 转换为小写;
-	let redirectUrl = '';
-
-	if (userAgent.includes('clash.meta')) {
-		redirectUrl = driveLinks[1];
-	} else if (userAgent.includes('clash')) {
-		redirectUrl = driveLinks[2];
-	} else if (userAgent.includes('v2ray')) {
-		redirectUrl = driveLinks[3];
-	} else {
-		// 默认的重定向链接，如果无法匹配任何特定的 User-Agent
-		// 返回 404 错误响应
-		return new Response('Not Found', { status: 404 });
-	}
-
-	return Response.redirect(redirectUrl, 302);
+    } catch (error) {
+        return new Response('Internal Server Error', { status: 500 });
+    }
 }
