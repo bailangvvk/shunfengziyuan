@@ -1,21 +1,22 @@
 export default {
   async fetch(request, env, ctx) {
     try {
-      const result = await handleRequest(request);
-      
+      const response = await handleRequest(request);
+      const resultText = await response.text(); // 将 Response 对象转换为字符串
+
       // 仅在环境变量存在时发送通知到 Telegram
       if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
         await notifyTelegram({
           botToken: env.TELEGRAM_BOT_TOKEN,
           chatId: env.TELEGRAM_CHAT_ID,
           title: '处理成功',
-          message: result,
-          videoId: extractVideoId(result),
-          nodeUrl: extractNodeUrl(result)
+          message: resultText,
+          videoId: extractVideoId(resultText),
+          nodeUrl: extractNodeUrl(resultText)
         });
       }
 
-      return result;
+      return response;
     } catch (error) {
       // 处理错误并通知 Telegram，仅在环境变量存在时
       if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
@@ -161,14 +162,12 @@ function formatMessage({ title, message, videoId, nodeUrl }) {
 
 function extractVideoId(result) {
   // 提取视频 ID 的逻辑
-  // 这里使用简化的方式，需要根据实际情况调整
   const videoIdMatch = result.match(/videoId":"([a-zA-Z0-9_-]{11})"/);
   return videoIdMatch ? videoIdMatch[1] : '未找到视频 ID';
 }
 
 function extractNodeUrl(result) {
   // 提取节点 URL 的逻辑
-  // 这里使用简化的方式，需要根据实际情况调整
   const nodeUrlMatch = result.match(/本期免费节点获取：\s*(https?:\/\/[^\s"]+)/);
   return nodeUrlMatch ? nodeUrlMatch[1] : '未找到节点 URL';
 }
