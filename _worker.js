@@ -1,8 +1,8 @@
 export default {
   async fetch(request, env, ctx) {
     try {
-      const response = await handleRequest(request);
-      const resultText = await response.text(); // 将 Response 对象转换为字符串
+      const result = await handleRequest(request);
+      const resultText = await result.text(); // 将 Response 对象转换为字符串
 
       // 仅在环境变量存在时发送通知到 Telegram
       if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
@@ -10,13 +10,11 @@ export default {
           botToken: env.TELEGRAM_BOT_TOKEN,
           chatId: env.TELEGRAM_CHAT_ID,
           title: '处理成功',
-          message: resultText,
-          videoId: extractVideoId(resultText),
-          nodeUrl: extractNodeUrl(resultText)
+          message: formatMessage(resultText, request)
         });
       }
 
-      return response;
+      return result;
     } catch (error) {
       // 处理错误并通知 Telegram，仅在环境变量存在时
       if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
@@ -123,7 +121,7 @@ async function handleRequest(request) {
   return Response.redirect(redirectUrl, 302);
 }
 
-async function notifyTelegram({ botToken, chatId, title, message, videoId, nodeUrl }) {
+async function notifyTelegram({ botToken, chatId, title, message }) {
   if (!botToken || !chatId) {
     console.warn('Telegram bot token or chat ID is not set. Skipping notification.');
     return;
@@ -132,7 +130,7 @@ async function notifyTelegram({ botToken, chatId, title, message, videoId, nodeU
   const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
   const payload = {
     chat_id: chatId,
-    text: formatMessage({ title, message, videoId, nodeUrl }),
+    text: message,
   };
 
   try {
@@ -146,28 +144,45 @@ async function notifyTelegram({ botToken, chatId, title, message, videoId, nodeU
   }
 }
 
-function formatMessage({ title, message, videoId, nodeUrl }) {
-  let formattedMessage = `*${title}*\n\n${message}\n\n`;
+function formatMessage(resultText, request) {
+  // 假设 resultText 包含需要的信息
+  const ip = extractInfo(resultText, 'IP');
+  const country = extractInfo(resultText, '国家');
+  const city = extractInfo(resultText, '城市');
+  const organization = extractInfo(resultText, '组织');
+  const asn = extractInfo(resultText, 'ASN');
+  const isp = extractInfo(resultText, 'ISP');
+  const region = extractInfo(resultText, '区域');
+  const timezone = extractInfo(resultText, '时区');
+  const postalCode = extractInfo(resultText, '邮编');
+  const latitude = extractInfo(resultText, '经纬度').split(',')[0] || 'undefined';
+  const longitude = extractInfo(resultText, '经纬度').split(',')[1] || 'undefined';
+  const hostname = extractInfo(resultText, '主机名');
+  const ua = request.headers.get('User-Agent') || 'undefined';
+  const domain = extractInfo(resultText, '域名');
+  const entry = extractInfo(resultText, '入口');
+  const statusCode = extractInfo(resultText, '状态码');
 
-  if (videoId) {
-    formattedMessage += `视频 ID: ${videoId}\n`;
-  }
-
-  if (nodeUrl) {
-    formattedMessage += `节点 URL: ${nodeUrl}\n`;
-  }
-
-  return formattedMessage;
+  return `# 获取订阅 edgetunnel\n\n` +
+    `IP: ${ip}\n` +
+    `国家: ${country}\n` +
+    `城市: ${city}\n` +
+    `组织: ${organization}\n` +
+    `ASN: ${asn}\n` +
+    `ISP: ${isp}\n` +
+    `区域: ${region}\n` +
+    `时区: ${timezone}\n` +
+    `邮编: ${postalCode}\n` +
+    `经纬度: ${latitude}, ${longitude}\n` +
+    `主机名: ${hostname}\n` +
+    `UA: ${ua}\n` +
+    `域名: ${domain}\n` +
+    `入口: ${entry}\n` +
+    `状态码: ${statusCode}`;
 }
 
-function extractVideoId(result) {
-  // 提取视频 ID 的逻辑
-  const videoIdMatch = result.match(/videoId":"([a-zA-Z0-9_-]{11})"/);
-  return videoIdMatch ? videoIdMatch[1] : '未找到视频 ID';
-}
-
-function extractNodeUrl(result) {
-  // 提取节点 URL 的逻辑
-  const nodeUrlMatch = result.match(/本期免费节点获取：\s*(https?:\/\/[^\s"]+)/);
-  return nodeUrlMatch ? nodeUrlMatch[1] : '未找到节点 URL';
+function extractInfo(text, key) {
+  const regex = new RegExp(`${key}:\\s*(.*)`);
+  const match = text.match(regex);
+  return match ? match[1] : 'undefined';
 }
