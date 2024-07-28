@@ -1,24 +1,27 @@
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-
 export default {
   async fetch(request, env, ctx) {
     try {
       const result = await handleRequest(request);
+      
       // 仅在环境变量存在时发送通知到 Telegram
-      if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+      if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
         await notifyTelegram({
+          botToken: env.TELEGRAM_BOT_TOKEN,
+          chatId: env.TELEGRAM_CHAT_ID,
           title: '处理成功',
           message: result,
           videoId: extractVideoId(result),
           nodeUrl: extractNodeUrl(result)
         });
       }
+
       return result;
     } catch (error) {
       // 处理错误并通知 Telegram，仅在环境变量存在时
-      if (TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID) {
+      if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
         await notifyTelegram({
+          botToken: env.TELEGRAM_BOT_TOKEN,
+          chatId: env.TELEGRAM_CHAT_ID,
           title: '处理失败',
           message: `Error: ${error.message}`
         });
@@ -119,15 +122,15 @@ async function handleRequest(request) {
   return Response.redirect(redirectUrl, 302);
 }
 
-async function notifyTelegram({ title, message, videoId, nodeUrl }) {
-  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+async function notifyTelegram({ botToken, chatId, title, message, videoId, nodeUrl }) {
+  if (!botToken || !chatId) {
     console.warn('Telegram bot token or chat ID is not set. Skipping notification.');
     return;
   }
 
-  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
   const payload = {
-    chat_id: TELEGRAM_CHAT_ID,
+    chat_id: chatId,
     text: formatMessage({ title, message, videoId, nodeUrl }),
   };
 
