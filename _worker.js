@@ -145,7 +145,7 @@ async function notifyTelegram({ botToken, chatId, title, message }) {
 }
 
 function formatMessage(resultText, request) {
-  // 假设 resultText 包含需要的信息
+  console.log('Result Text:', resultText); // 调试输出 resultText
   const ip = extractInfo(resultText, 'IP');
   const country = extractInfo(resultText, '国家');
   const city = extractInfo(resultText, '城市');
@@ -155,8 +155,7 @@ function formatMessage(resultText, request) {
   const region = extractInfo(resultText, '区域');
   const timezone = extractInfo(resultText, '时区');
   const postalCode = extractInfo(resultText, '邮编');
-  const latitude = extractInfo(resultText, '经纬度').split(',')[0] || 'undefined';
-  const longitude = extractInfo(resultText, '经纬度').split(',')[1] || 'undefined';
+  const [latitude, longitude] = extractInfo(resultText, '经纬度').split(',') || ['undefined', 'undefined'];
   const hostname = extractInfo(resultText, '主机名');
   const ua = request.headers.get('User-Agent') || 'undefined';
   const domain = extractInfo(resultText, '域名');
@@ -182,7 +181,7 @@ function formatMessage(resultText, request) {
 }
 
 function extractInfo(text, key) {
-  const regex = new RegExp(`${key}:\\s*(.*)`);
+  const regex = new RegExp(`${key}:\\s*(.*)`, 'i');
   const match = text.match(regex);
-  return match ? match[1] : 'undefined';
+  return match ? match[1].trim() : 'undefined';
 }
