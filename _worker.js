@@ -82,7 +82,7 @@ export default {
 	// const userAgent = request.headers.get('User-Agent');
 	// let redirectUrl = '';
   
-	// if (userAgent.includes('clash.meta')) {
+	// if (userAgent.toLowerCase().includes('meta')) {
 	//   redirectUrl = driveLinks[0]; // 第一个链接
 	// } else if (userAgent.toLowerCase().includes('clash')) {
 	//   redirectUrl = driveLinks[1]; // 第二个链接
@@ -93,30 +93,29 @@ export default {
 	// }
   
 	// return Response.redirect(redirectUrl, 302);
+    const userAgent = request.headers.get('User-Agent') || '';
+    const urltext = new URL(request.url);
+    const queryParams = urltext.searchParams;
 
-	const userAgent = request.headers.get('User-Agent') || '';
-    	const url = new URL(request.url);
-    	const queryParams = url.searchParams;
-	
-    	let redirectUrl;
-	
-    	// Check URL query parameters
-    	if (queryParams.has('meta')) {
-		redirectUrl = driveLinks[0]; // 第一个链接
-    	} else if (queryParams.has('clash')) {
-		redirectUrl = driveLinks[1]; // 第二个链接
-    	} else if (queryParams.has('v2ray')) {
-		redirectUrl = driveLinks[2]; // 第三个链接
-    	} else if (userAgent.toLowerCase().includes('meta')) {
-		redirectUrl = driveLinks[0]; // 第一个链接
-    	} else if (userAgent.toLowerCase().includes('clash')) {
-		redirectUrl = driveLinks[1]; // 第二个链接
-    	} else if (userAgent.toLowerCase().includes('v2ray')) {
-	        redirectUrl = driveLinks[2]; // 第三个链接
-    	} else {
-		return new Response('No matching user agent or query parameter found.', { status: 400 });
-    	}
-	
-    	return Response.redirect(redirectUrl);
+    let redirectUrl;
+
+    // Check URL query parameters
+    if (queryParams.has('meta')) {
+        redirectUrl = driveLinks[0]; // 第一个链接
+    } else if (queryParams.has('clash')) {
+        redirectUrl = driveLinks[1]; // 第二个链接
+    } else if (queryParams.has('v2ray')) {
+        redirectUrl = driveLinks[2]; // 第三个链接
+    } else if (userAgent.toLowerCase().includes('meta')) {
+        redirectUrl = driveLinks[0]; // 第一个链接
+    } else if (userAgent.toLowerCase().includes('clash')) {
+        redirectUrl = driveLinks[1]; // 第二个链接
+    } else if (userAgent.toLowerCase().includes('v2ray')) {
+        redirectUrl = driveLinks[2]; // 第三个链接
+    } else {
+        return new Response('No matching user agent or query parameter found.', { status: 400 });
+    }
+
+    return Response.redirect(redirectUrl);
   }
   
