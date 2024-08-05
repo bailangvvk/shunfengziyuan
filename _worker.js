@@ -89,8 +89,8 @@ async function handleRequest(request) {
   } else if (userAgent.toLowerCase().includes('v2ray') || new URL(request.url).searchParams.has('v2ray')) {
     redirectUrl = driveLinks[2]; // 第三个链接
   } else {
-    // return new Response('No matching user agent found.', { status: 400 });
-    redirectUrl = driveLinks[2]; // 第三个链接
+    return new Response('No matching user agent found.', { status: 400 });
+    //redirectUrl = driveLinks[2]; // 第三个链接
   }
   
   return Response.redirect(redirectUrl, 302);
