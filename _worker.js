@@ -92,6 +92,7 @@ async function handleRequest(request) {
     return new Response('No matching user agent found.', { status: 400 });
     //redirectUrl = driveLinks[2]; // 第三个链接
   }
-  
-  return Response.redirect(redirectUrl, 302);
+
+  return Response(new URL(request.url))
+  // return Response.redirect(redirectUrl, 302);
 }
