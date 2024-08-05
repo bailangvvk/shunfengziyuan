@@ -1,6 +1,11 @@
 export default {
   async fetch(request, env, ctx) {
-    return await handleRequest(request);
+    try {
+      return await handleRequest(request);
+    } catch (error) {
+      // 捕获处理函数中出现的任何错误
+      return new Response(`Error: ${error.message}`, { status: 500 });
+    }
   }
 };
 
@@ -9,14 +14,19 @@ async function handleRequest(request) {
   const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
   
   // 发起搜索请求
-  const searchResponse = await fetch(url, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-  });
+  let searchResponse;
+  try {
+    searchResponse = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+  } catch (error) {
+    return new Response(`Failed to fetch YouTube search page: ${error.message}`, { status: 500 });
+  }
 
   if (!searchResponse.ok) {
-    return new Response('Failed to fetch YouTube results.', { status: searchResponse.status });
+    return new Response(`Failed to fetch YouTube results. Status: ${searchResponse.status}`, { status: searchResponse.status });
   }
   
   // 提取搜索结果页面的文本内容
@@ -35,14 +45,19 @@ async function handleRequest(request) {
   
   // 请求视频详情页面
   const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-  const videoResponse = await fetch(videoUrl, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-  });
+  let videoResponse;
+  try {
+    videoResponse = await fetch(videoUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+  } catch (error) {
+    return new Response(`Failed to fetch video details page: ${error.message}`, { status: 500 });
+  }
   
   if (!videoResponse.ok) {
-    return new Response(`Failed to fetch video details for ${videoId}.`, { status: videoResponse.status });
+    return new Response(`Failed to fetch video details for ${videoId}. Status: ${videoResponse.status}`, { status: videoResponse.status });
   }
   
   // 提取视频详情页面的文本内容
@@ -58,14 +73,19 @@ async function handleRequest(request) {
   const nodeUrl = nodeUrlMatch[1];
   
   // 请求节点获取页面
-  const nodeResponse = await fetch(nodeUrl, {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-  });
+  let nodeResponse;
+  try {
+    nodeResponse = await fetch(nodeUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+  } catch (error) {
+    return new Response(`Failed to fetch node URL: ${error.message}`, { status: 500 });
+  }
   
   if (!nodeResponse.ok) {
-    return new Response(`Failed to fetch node URL ${nodeUrl}.`, { status: nodeResponse.status });
+    return new Response(`Failed to fetch node URL ${nodeUrl}. Status: ${nodeResponse.status}`, { status: nodeResponse.status });
   }
   
   // 提取节点获取页面的文本内容
