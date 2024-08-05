@@ -86,18 +86,14 @@ async function handleRequest(request) {
   const searchParam = urlParams.get('type') || '';
   
   let redirectUrl = '';
-  
-  if (searchParam.toLowerCase() === 'meta') {
-    redirectUrl = driveLinks[0]; // 第一个链接
-  } else if (searchParam.toLowerCase() === 'clash') {
-    redirectUrl = driveLinks[1]; // 第二个链接
-  } else if (searchParam.toLowerCase() === 'v2ray') {
-    redirectUrl = driveLinks[2]; // 第三个链接
-  } else {
-    return new Response('No matching type found in URL parameters.', { status: 400 });
-  }
 
-  if (userAgent.toLowerCase().includes('meta')) {
+  if (searchParam.toLowerCase().includes('meta')) {
+    redirectUrl = driveLinks[0]; // 第一个链接
+  } else if (searchParam.toLowerCase().includes('clash')) {
+	  redirectUrl = driveLinks[1]; // 第二个链接
+  } else if (searchParam.toLowerCase().includes('v2ray')) {
+    redirectUrl = driveLinks[2]; // 第三个链接
+  } else if (userAgent.toLowerCase().includes('meta')) {
 	  redirectUrl = driveLinks[0]; // 第一个链接
 	} else if (userAgent.toLowerCase().includes('clash')) {
 	  redirectUrl = driveLinks[1]; // 第二个链接
