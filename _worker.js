@@ -103,7 +103,9 @@ async function handleRequest(request) {
     } else if (path.includes('v2ray')) {
       redirectUrl = driveLinks[2]; // 第三个链接
     } else {
-      return new Response('No matching user agent or path found.', { status: 400 });
+      // 返回请求的 URL 以帮助调试
+      const errorMessage = `No matching user agent or path found. Request URL: ${request.url}`;
+      return new Response(errorMessage, { status: 400 });
     }
   }
   
