@@ -14,7 +14,7 @@ async function handleRequest(request) {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
     }
   });
-  
+
   if (!searchResponse.ok) {
     return new Response('Failed to fetch YouTube results.', { status: searchResponse.status });
   }
@@ -80,19 +80,32 @@ async function handleRequest(request) {
   
   // 根据用户代理设置重定向 URL
   const userAgent = request.headers.get('User-Agent');
+  
+  // 从请求 URL 查询参数中提取要查找的字符串
+  const urlParams = new URL(request.url).searchParams;
+  const searchParam = urlParams.get('type') || '';
+  
   let redirectUrl = '';
   
-  if (userAgent.toLowerCase().includes('meta') || new URL(request.url).searchParams.has('meta')) {
+  if (searchParam.toLowerCase() === 'meta') {
     redirectUrl = driveLinks[0]; // 第一个链接
-  } else if (userAgent.toLowerCase().includes('clash') || new URL(request.url).searchParams.has('clash')) {
+  } else if (searchParam.toLowerCase() === 'clash') {
     redirectUrl = driveLinks[1]; // 第二个链接
-  } else if (userAgent.toLowerCase().includes('v2ray') || new URL(request.url).searchParams.has('v2ray')) {
+  } else if (searchParam.toLowerCase() === 'v2ray') {
     redirectUrl = driveLinks[2]; // 第三个链接
   } else {
-    return new Response('No matching user agent found.', { status: 400 });
-    //redirectUrl = driveLinks[2]; // 第三个链接
+    return new Response('No matching type found in URL parameters.', { status: 400 });
   }
 
-  return Response(new URL(request.url))
-  // return Response.redirect(redirectUrl, 302);
+  if (userAgent.toLowerCase().includes('meta')) {
+	  redirectUrl = driveLinks[0]; // 第一个链接
+	} else if (userAgent.toLowerCase().includes('clash')) {
+	  redirectUrl = driveLinks[1]; // 第二个链接
+	} else if (userAgent.toLowerCase().includes('v2ray')) {
+	  redirectUrl = driveLinks[2]; // 第三个链接
+	} else {
+	  return new Response('No matching user agent found.', { status: 400 });
+	}
+  
+  return Response.redirect(redirectUrl, 302);
 }
