@@ -82,16 +82,16 @@ export default {
 	const userAgent = request.headers.get('User-Agent');
 	let redirectUrl = '';
   
-	if (userAgent.toLowerCase().includes('meta')) {
-	  redirectUrl = driveLinks[0]; // 第一个链接
-	} else if (userAgent.toLowerCase().includes('clash')) {
-	  redirectUrl = driveLinks[1]; // 第二个链接
-	} else if (userAgent.toLowerCase().includes('v2ray')) {
+	// if (userAgent.toLowerCase().includes('meta')) {
+	//   redirectUrl = driveLinks[0]; // 第一个链接
+	// } else if (userAgent.toLowerCase().includes('clash')) {
+	//   redirectUrl = driveLinks[1]; // 第二个链接
+	// } else if (userAgent.toLowerCase().includes('v2ray')) {
+	//   redirectUrl = driveLinks[2]; // 第三个链接
+	// } else {
+	//   // return new Response('No matching user agent found.', { status: 400 });
 	  redirectUrl = driveLinks[2]; // 第三个链接
-	} else {
-	  // return new Response('No matching user agent found.', { status: 400 });
-	  redirectUrl = driveLinks[2]; // 第三个链接
-	}
+	// }
   
 	return Response.redirect(redirectUrl, 302);
   }
